@@ -1,0 +1,26 @@
+--- 
+:title: Ruby on Wars
+:iconname: RoW
+:video: true
+:audio: true
+:cdrom: false
+:joystick: false
+
+#video configurations
+:width: 800
+:height: 600
+:bpp: 32
+#:videosurfacelocation may be either 'hw', 'sw', 'best' or 'best_with_alpha'
+:videosurfacelocation: best
+:doublebuffering: true
+#:autolock: true
+
+#audio configurations
+:soundchannels: 2
+:frequency: 22050
+:format: 32784
+:chunksize: 4096
+
+#keyboard configurations (in ms and 0 for no-repeat)
+:delay: 100
+:interval: 10

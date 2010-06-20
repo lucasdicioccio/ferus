@@ -1,0 +1,336 @@
+# screen.rb
+# This file is part of Férus, "Framework Elegant en RUby et SDL".
+
+# Copyright(c) Di Cioccio Lucas (FrihD)
+# bizarrebizarre@gmail.com
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+# a screen represents
+
+module Ferus
+class Screen
+include SDL::Key
+	
+	@booted		= false
+	@keystates  = false
+	@background = false
+	
+	@loading_meths 				= []
+	@routines					= []
+	@special_moves				= []
+	@at_boot_operations 		= []
+	@at_first_boot_operations 	= []
+	@at_quit_operations 		= []
+	@music						= []
+	
+	attr_reader :special_moves
+	
+	def initialize(params=nil)
+		@exiting		= false
+		@loaded			= false
+		@pending_moves	= []
+		@params			= params
+		@keymap			= keystate(:default)
+	end
+		
+	#################
+	# Controller part
+	
+	def mysend(event)
+		method_to_send = @keymap[event.sym] if event
+		send(method_to_send) if method_to_send and self.respond_to? method_to_send
+	end	
+	
+	# simple predicate to know if the screen will soon quit
+	def exiting?
+		@exiting
+	end
+	
+	# asks the kernel to stop execution of current screen
+	def kill!
+		at_quit if self.respond_to? :at_quit
+		@exiting = true
+	end
+	
+	alias :quit :kill!
+	
+	# set the next screen and asks the kernel to quit by putting its
+	# @exiting flag to true in a single statement
+	# may later have effects of (cross-)fading etc.
+	def quit_for(hash)
+		set_next_screen(hash)
+		kill!
+	end
+	
+	# loads the following screen, its boot section starts
+	# might lead to race conditions with scheduler
+	def set_next_screen(hash)
+		FerusKernel.instance.set_next_screen(hash)
+	end
+	
+	# a predicate which returns the current state of booting AND set it
+	# to already booted 
+	def Screen.booted?
+		if @booted
+			@booted
+		else
+			@booted = true
+			false
+		end
+	end
+	
+	###########
+	# View part
+	
+	def render
+		view if self.respond_to? :view
+	end
+	
+	def fullscreen
+		Display.instance.fullscreen
+	end
+
+	########################################################
+	# Specific modules loaded only when stated in the code #
+	########################################################
+	
+	def Screen.keystate(name=:default,hash=nil)
+		unless @keystates
+			@keystates = {}
+		end
+		@keystates[name.to_sym] = hash if hash
+		@keystates
+	end
+	
+	def keystate(name=:default)
+		self.class.keystates[name]
+	end
+	
+	def Screen.keystates
+		@keystates ||= {}
+	end
+	
+	def change_keystate_to(name)
+		@keymap = self.class.keystates[name.to_sym]
+	end
+	
+	#############
+	#background
+	def Screen.background(name=nil)
+		include HasBackground
+		@background = Surface.new("./app/data/backgrounds/#{name}") if name
+		@background
+	end
+	
+	def Screen.foreground(name=nil)
+		include HasBackground
+		@foreground = Surface.new("./app/data/foregrounds/#{name}") if name
+		@foreground
+	end
+	
+	module HasBackground
+		def change_background(name)
+			self.class.background(name)
+		end
+		
+		def change_foreground(name)
+			self.class.foreground(name)
+		end
+		
+		def render
+			self.class.background.put if self.class.background
+			view if self.respond_to? :view
+			self.class.foreground.put if self.class.foreground
+		end
+	end
+	
+	#############
+	#1st boot
+	def Screen.at_first_boot(array=nil)
+		include HasFirstBootActions
+		@at_first_boot_operations ||= []
+		@at_first_boot_operations += array if array
+		@at_first_boot_operations.uniq!
+		@at_first_boot_operations
+	end
+	
+	module HasFirstBootActions
+	
+		def first_boot
+			self.class.at_first_boot.each do |o|
+				puts "+ calling at_first_boot operation > #{o}" if $DEBUG
+				self.send(o) if self.respond_to? o
+			end
+		end
+		
+	end
+	
+	#############
+	#boot
+	def Screen.at_boot(array = nil)
+		include HasAtBootActions
+		@at_boot_operations ||= []
+		@at_boot_operations += array if array
+		@at_boot_operations.uniq! 
+		@at_boot_operations
+	end
+	
+	module HasAtBootActions
+	
+		def boot
+			self.class.at_boot.each do |o|
+				puts "+ calling at_boot operation > #{o}" if $DEBUG
+				self.send(o) if self.respond_to? o
+			end
+		end
+		
+	end
+	
+	#############
+	#routines
+	def Screen.routines(array = nil)
+		include HasRoutines
+		@routines ||= []
+		@routines += array if array
+		@routines.uniq!
+		@routines
+	end
+	
+	module HasRoutines
+	
+		def routines
+			self.class.routines.each do |r|
+				Thread.new do
+					puts "+ calling routine > #{r}" if $DEBUG
+					self.send(r) if self.respond_to? r
+				end
+			end
+		end
+		
+	end
+	
+	#############
+	#loading functions
+	def Screen.during_loading(array = nil)
+		include HasLoadingActions
+		@loading_meths ||= []
+		@loading_meths += array if array
+		@loading_meths.uniq!
+		@loading_meths
+	end
+	
+	module HasLoadingActions
+	
+		def load
+			self.class.during_loading.each do |m|
+				puts "+ calling loading action > #{m}" if $DEBUG
+				self.send(m) if self.respond_to? m
+			end
+			@loaded = true
+		end
+		
+		# predicate to know if the screen as finished its loading actions
+		def loaded?
+			@loaded
+		end
+		
+	end
+	
+	#############
+	#quit
+	def Screen.at_quit(array=nil)
+		include HasQuitActions
+		@at_quit_operations ||= []
+		@at_quit_operations += array if array
+		@at_quit_operations.uniq!
+		@at_quit_operations
+	end
+	
+	module HasQuitActions
+		def at_quit
+			self.class.at_quit.each do |o|
+				puts "+ calling at_quit operation > #{o}" if $DEBUG
+				self.send(o) if self.respond_to? o
+			end
+		end
+	end
+	
+	#############
+	#specialmoves
+	def Screen.special_moves(array=nil)
+		include HasSpecialMoves
+		@special_moves ||= []
+		@special_moves += array if array
+		@special_moves.uniq!
+		@special_moves
+	end
+	
+	module HasSpecialMoves
+		# we overwrite the mysend function
+		def mysend(event)
+			method_to_send = nil
+			# detetect current_special_moves
+			@pending_moves.each do |m|
+				if !m.elapsed?
+					if m.finished_with_key?(event.sym)
+						method_to_send = m.action
+						event.sym == nil  #if a special move is detected, then we stop checking the other ones
+						@pending_moves = []
+					end
+				else
+					@pending_moves -= [m]
+				end
+			end #end each
+			
+			if method_to_send.nil?
+				#detect new_special_moves
+				new_sm = special_moves.select { |s| s[:sequence][0] == event.sym } #we don't do it for both @pending_moves and special_moves since new ones have to be timed
+				new_sm.each { |s| @pending_moves << SpecialMove.new(s) }
+		
+				#checking normal key in keymap if a special move was not started
+				method_to_send = keymap[event.sym] if event.sym
+			end
+			
+			#finally call the method
+			send(method_to_send) if method_to_send and self.respond_to? method_to_send
+		end 
+	
+		def special_moves
+			self.class.special_moves
+		end
+	
+	end#end HasSpecialMoves
+	
+	
+	#############
+	#music
+	def Screen.music(path=nil)
+		include HasMusic
+		@music = Ferus::Music.new(path) if path
+		@music
+	end
+	
+	module HasMusic
+		def music
+			self.class.music.play
+		end
+	end
+	
+	#############
+	############# END OF CLASS
+end
+end

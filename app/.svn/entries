@@ -1,0 +1,43 @@
+10
+
+dir
+19
+svn://rubyforge.org/var/svn/ferus/trunk/app
+svn://rubyforge.org/var/svn/ferus
+
+
+
+2007-07-24T16:22:44.343042Z
+18
+frihd
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+b1825276-3c93-4505-83be-8344cc97d5c3
+
+screens
+dir
+
+models
+dir
+
+config
+dir
+
+data
+dir
+
+views
+dir
+

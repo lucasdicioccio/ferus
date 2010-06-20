@@ -1,0 +1,94 @@
+Here it's Férus, which stands for Framework Elegant en RUby et SDL.
+
+~~~~~
+ABOUT
+~~~~~
+Férus aims to be a simple frameworks to develop little games with ruby.
+At least for curious people.
+
+For the story, at the beginning, I wanted to create a game with SDL and
+ruby and started to create to understand SDL. As I wanted to make my
+code re-useable, I tried to make useful tools. This also means that the
+codeline will follow the codeline of my future game.
+Moreover, the kernel-style code may be re-used in other fields.
+Due to low efficiency of Ruby and my ignorance in openGL, I
+do not plan to support 3D.
+
+~~~~~~~
+WARNING
+~~~~~~~
+That's a development version. It may change a lot and needs a lot of
+improvements. A LOT of SDL features are not ready, thus I imagine it's
+already possible to create some stupid games.
+Moreover, it only has been tested on linux with ruby 1.8.5 (and over).
+
+~~~~~~~~~~
+EFFICIENCY
+~~~~~~~~~~
+Férus don't aim to be an almighty frameworks, the more it helps you,
+the less you'll have freedom to optimize. As its goal is to do an
+acceptable engine for some 2D games, it will definitely don't be
+optimal for each genre of games. As an example, don't expect to do a
+first person shooter with férus.
+
+Ruby as some problem when dealing with threads : it has its native 
+so-called "green-thread", so, for now, it can simply "wait" for an
+event. We have to spinlock and thus, consumes a lot of CPU power. The
+problem will logically be solved with coming versions of Ruby.
+
+If you don't understand the previous paragraph, well, it's not an
+issue, just remember that Férus will waste a lot of CPU power and avoid
+making havoc in the /base directory ;).
+
+~~~~~~~
+INSTALL
+~~~~~~~
+There is still no installer, I will certainly create a gem later.
+To run the frameworks, at current state, you will need ruby, SDL
+and rubySDL bindings.
+
+see :
+- http://www.ruby-lang.org/
+and
+- http://www.libsdl.org/
+and
+- http://rubyforge.org/projects/rubysdl/
+for these files
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+NOTES ON SDL FOR LAZY GUYS
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+RubySDL must be compiled with SDL_image extension to import PPX,XPM,PCX,
+GIF,JPEG,PNG and TGA files
+RubySDL must be compiled with the mixer to use the mixer.
+
+To use SDL.autolock, SGE must be installed.
+
+~~~~~~~~~~~~~
+DOCUMENTATION
+~~~~~~~~~~~~~
+I Will soon make a documentation, for now, the code is readable and has
+several comments on the key-points. Since it changes often and will 
+certainly change again, I don't spend my energy doing a doc.
+I guess it's not too hard to understand. See the dumb example in ./app.
+
+~~~~~~~~~~~~~~~
+TROUBLESHOOTING
+~~~~~~~~~~~~~~~
+I hope you wont get in trouble, nevertheless, you can contact me for
+details.
+At the moment try to follow the arborescence of dumb example. If you
+have path errors.
+
+~~~~~~~~
+CONTACTS
+~~~~~~~~
+Di Cioccio Lucas (alias FrihD)
+bizarrebizarre [at] gmail [dot] com
+http://dicioccio.fr/
+
+~~~~~~~~~~
+PROPAGANDA
+~~~~~~~~~~
+Visit http://boxson.net/ help our association of open-music.
+It's in French.
